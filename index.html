@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kilroid & Glitch Universe</title>
+<style>
+body { margin:0; overflow:hidden; font-family: Arial,sans-serif; background:#0d0b1f; color:white; }
+canvas { display:block; background: radial-gradient(circle at center, #4e3ba8 0%, #16112d 55%, #09070f 100%); }
+#chat-container {
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  width:90%; max-width:500px; display:flex; gap:8px; z-index:100;
+}
+#chat-input { flex:1; padding:12px; border-radius:12px; border:none; outline:none; font-size:1rem; }
+#send-btn { padding:12px 18px; border-radius:12px; border:none; background:#8c6cff; color:white; font-weight:bold; cursor:pointer; }
+#buttons { position:absolute; top:20px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:100; }
+.move-btn { padding:12px 18px; border-radius:12px; border:none; background:#00f7ff; color:black; font-weight:bold; cursor:pointer; font-size:1rem; }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="buttons">
+  <button class="move-btn" data-dir="left">Left</button>
+  <button class="move-btn" data-dir="right">Right</button>
+  <button class="move-btn" data-dir="up">Up</button>
+  <button class="move-btn" data-dir="down">Down</button>
+</div>
+
+<div id="chat-container">
+  <input type="text" id="chat-input" placeholder="Talk to Glitch...">
+  <button id="send-btn">Send</button>
+</div>
+
+<script>
+// ====== Canvas Setup ======
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// ====== Load Sprite Sheet ======
+const sprite = new Image();
+sprite.src = 'glitch-sprites.png'; // <-- Your sprite sheet here
+
+const frameWidth = 128;
+const frameHeight = 128;
+const directions = ['up','left','right','down'];
+const framesPerDir = 4;
+
+// ====== Character State ======
+let charX = canvas.width/2 - frameWidth/2;
+let charY = canvas.height/2 - frameHeight/2;
+let currentDir = 'down';
+let frameIndex = 0;
+let frameCounter = 0;
+const frameSpeed = 10; // higher = slower animation
+let moving = false;
+
+// ====== Input ======
+const keys = {};
+window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; moving=true; });
+window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; moving=false; });
+
+document.querySelectorAll('.move-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    moveDirection(btn.dataset.dir);
+  });
+});
+
+// ====== ChatGPT + TTS ======
+async function sendMessage(message){
+  try{
+    const res = await fetch('https://api.openai.com/v1/responses',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer YOUR_OPENAI_API_KEY' // <-- Replace here
+      },
+      body: JSON.stringify({
+        model:"gpt-4o-mini",
+        input: message
+      })
+    });
+    const data = await res.json();
+    const reply = data.output?.[0]?.content?.[0]?.text || "I am here!";
+    speakText(reply);
+  } catch(err){ console.error(err); speakText("Oops, something went wrong!"); }
+}
+
+function speakText(text){
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate=1; utter.pitch=1;
+  window.speechSynthesis.speak(utter);
+}
+
+document.getElementById('send-btn').addEventListener('click', ()=>{
+  const msg=document.getElementById('chat-input').value;
+  if(msg.trim()!==""){ sendMessage(msg); document.getElementById('chat-input').value=''; }
+});
+
+// ====== Hero Glow & Particles ======
+let particles=[];
+for(let i=0;i<100;i++){
+  particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,dx:(Math.random()-0.5)*0.5,dy:(Math.random()-0.5)*0.5,size:2+Math.random()*2});
+}
+
+function updateParticles(){
+  for(let p of particles){
+    p.x += p.dx; p.y += p.dy;
+    if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+    if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+  }
+}
+function drawParticles(){
+  ctx.fillStyle='rgba(255,255,255,0.3)';
+  for(let p of particles){
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+}
+
+// ====== Animation Loop ======
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // draw particles
+  drawParticles();
+  updateParticles();
+
+  // handle movement
+  moving=false;
+  if(keys['arrowup']||keys['w']){ charY-=3; currentDir='up'; moving=true; }
+  if(keys['arrowdown']||keys['s']){ charY+=3; currentDir='down'; moving=true; }
+  if(keys['arrowleft']||keys['a']){ charX-=3; currentDir='left'; moving=true; }
+  if(keys['arrowright']||keys['d']){ charX+=3; currentDir='right'; moving=true; }
+
+  // animate frames
+  if(moving){ frameCounter++; if(frameCounter>=frameSpeed){ frameIndex=(frameIndex+1)%framesPerDir; frameCounter=0; } }
+  else{ frameIndex=0; }
+
+  // draw character
+  const dirIndex = directions.indexOf(currentDir);
+  ctx.drawImage(sprite, frameIndex*frameWidth, dirIndex*frameHeight, frameWidth, frameHeight, charX, charY, frameWidth, frameHeight);
+
+  // glow effect
+  ctx.save();
+  ctx.shadowColor = '#8c6cff';
+  ctx.shadowBlur = 20;
+  ctx.drawImage(sprite, frameIndex*frameWidth, dirIndex*frameHeight, frameWidth, frameHeight, charX, charY, frameWidth, frameHeight);
+  ctx.restore();
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ====== Button Movement Helper ======
+function moveDirection(dir){
+  switch(dir){
+    case 'left': charX-=50; currentDir='left'; break;
+    case 'right': charX+=50; currentDir='right'; break;
+    case 'up': charY-=50; currentDir='up'; break;
+    case 'down': charY+=50; currentDir='down'; break;
+  }
+}
+</script>
+</body>
+</html>

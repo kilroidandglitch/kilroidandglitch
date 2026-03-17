@@ -76,7 +76,7 @@ async function sendMessage(message){
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'Authorization':'Bearer YOUR_OPENAI_API_KEY' // <-- Replace here
+        'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model:"gpt-4o-mini",
@@ -97,7 +97,7 @@ function speakText(text){
 
 document.getElementById('send-btn').addEventListener('click', ()=>{
   const msg=document.getElementById('chat-input').value;
-  if(msg.trim()!==""){ sendMessage(msg); document.getElementById('chat-input').value=''; }
+  if(msg.trim()!=""){ sendMessage(msg); document.getElementById('chat-input').value=''; }
 });
 
 // ====== Hero Glow & Particles ======

@@ -1,16 +1,13 @@
-## Hi there 👋
+# Kilroid & Glitch Universe
 
-<!--
-**kilroidandglitch/kilroidandglitch** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+**Imperfect by Design**
 
-Here are some ideas to get you started:
+Official website and store for Kilroid & Glitch hoodies and collectibles.  
+All content, characters, and branding are © 2026 Ryan & Laurél Bailey — All Rights Reserved.
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## Usage
+This repository contains the official website code.  
+Assets and characters may not be copied, reproduced, or redistributed without permission.
+
+## Preview
+![Glitch Hoodie Mockup](assets/glitch-hoodie.png)
